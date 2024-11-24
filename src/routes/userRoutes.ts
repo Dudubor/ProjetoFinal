@@ -54,4 +54,28 @@ router.post('/users', async (req, res) => {
     }
 });
 
+// Atualizar um usuário pelo ID
+router.put('/users/:id', async (req, res) => {
+    const userId = req.params.id; // ID do usuário passado na URL
+    const { name, email, password } = req.body; // Dados atualizados no corpo da requisição
+
+    try {
+        // Atualizar o usuário no banco de dados
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,          // ID do documento a ser atualizado
+            { name, email, password }, // Dados a serem atualizados
+            { new: true, runValidators: true } // Retorna o documento atualizado e valida os dados
+        );
+
+        if (!updatedUser) {
+            return res.status(statusCode.NotFound).json({ message: 'Usuário não encontrado.' });
+        }
+
+        res.status(statusCode.OK).json({ message: 'Usuário atualizado com sucesso!', data: updatedUser });
+    } catch (error) {
+        console.error('Erro ao atualizar o usuário:', error);
+        res.status(statusCode.InternalServerError).json({ error: 'Erro interno do servidor.' });
+    }
+});
+
 export default router;
