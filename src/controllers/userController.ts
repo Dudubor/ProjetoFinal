@@ -5,6 +5,7 @@ import { statusCode } from '../utils/statusCode';
 import { userSchema } from '../validators/userValidation'; // Importando o schema de validação
 import { z } from 'zod';
 import bcrypt from  'bcrypt'; 
+import * as service from '../services/userService'
 
 // Função para criar um novo usuário
 export const createUser = async (req: Request, res: Response) => {
@@ -12,14 +13,15 @@ export const createUser = async (req: Request, res: Response) => {
         const validatedData = userSchema.parse(req.body);
 
         let { name, email, password } = validatedData; // Desestrutura os dados da variavel validada
-        
+
         password = await bcrypt.hash(password, 10); //Criptografa a senha 
         
         // Cria um novo documento usando o modelo
         const newUser = new User({ name, email, password });
 
         // Salva o documento no MongoDB
-        const savedUser = await newUser.save();
+        const savedUser = await service.createUserService(newUser)
+        /* const savedUser = await newUser.save(); */
 
         res.status(statusCode.Created).json(savedUser); // Retorna o usuário criado
     } catch (error) {
@@ -37,7 +39,8 @@ export const createUser = async (req: Request, res: Response) => {
 export const getAllUsers = async (req: Request, res: Response) => {
 
     try {
-        const users = await User.find(); // Busca todos os documentos da coleção
+        const users = await service.getAllUsers(); 
+
         if (!users) {
             return res.status(statusCode.NotFound).json({ message: 'Nenhum usuário encontrado.' });
         }
@@ -53,8 +56,8 @@ export const getUserById = async (req: Request, res: Response) => {
 
     try {
         // Buscar o usuário no MongoDB
-        const user = await User.findById(userId);
-
+        const user = await service.getUserById(userId)
+        
         if (!user) {
             return res.status(statusCode.NotFound).json({ message: 'Usuário não encontrado!' });
         }
@@ -72,22 +75,17 @@ export const updateUser = async (req: Request, res: Response) => {
 
     try {
 
-
         const validatedData = userSchema.parse(req.body);
 
         let { name, email, password } = validatedData // Dados atualizados validados
 
-        if(password){ 
-            password = await bcrypt.hash(password, 10);
+        if(validatedData.password){ 
+            validatedData.password = await bcrypt.hash(validatedData.password, 10);
         }
 
-
         // Atualizar o usuário no banco de dados
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,          // ID do documento a ser atualizado
-            { name, email, password }, // Dados a serem atualizados
-            { new: true, runValidators: true } // Retorna o documento atualizado e valida os dados
-        );
+        const updatedUser = await service.updateUserService(userId, validatedData)
+
 
         if (!updatedUser) {
             return res.status(statusCode.NotFound).json({ message: 'Usuário não encontrado.' });
@@ -108,14 +106,14 @@ export const deleteUserById = async (req: Request, res: Response) => {
     const userId = req.params.id;
 
     try {
-        const user = await User.findById(userId);
+        const user = await service.getUserById(userId);
 
         if (!user) {
             return res.status(statusCode.NotFound).json({ message: 'Usuário não encontrado.' });
         }
 
-        await User.findByIdAndDelete(userId);
-
+        await service.deleteUserById(userId);
+        
         return res.status(statusCode.OK).json({ message: 'Usuário deletado com sucesso!' });
     } catch (error) {
         if (error instanceof z.ZodError) {
