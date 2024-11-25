@@ -102,3 +102,26 @@ export const updateUser = async (req: Request, res: Response) => {
         res.status(statusCode.InternalServerError).json({ error: 'Erro interno do servidor.' });
     }
 };
+
+// Função para deletar um usuário.
+export const deleteUserById = async (req: Request, res: Response) => {
+    const userId = req.params.id;
+
+    try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(statusCode.NotFound).json({ message: 'Usuário não encontrado.' });
+        }
+
+        await User.findByIdAndDelete(userId);
+
+        return res.status(statusCode.OK).json({ message: 'Usuário deletado com sucesso!' });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(statusCode.BadRequest).json({ errors: error.errors });
+        }
+        console.error('Erro ao deletar o usuário:', error);
+        res.status(statusCode.InternalServerError).json({ error: 'Erro interno do servidor.' });
+    }
+};
