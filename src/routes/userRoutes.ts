@@ -4,6 +4,9 @@ import { statusCode } from '../utils/statusCode';
 import * as userController from '../controllers/userController';
 
 const router = Router();
+router.get('/', (req, res) => {
+    return res.status(statusCode.BadRequest).json({ "Mensagem": "Esta é a rota padrão, utilize as rotas /users para fazer as requisições" });
+});
 
 // Cadastrar usuários
 router.post('/users', userController.createUser);
