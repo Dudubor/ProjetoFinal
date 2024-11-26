@@ -1,96 +1,52 @@
-
 import { Request, Response } from 'express';
-import User from '../models/userModel'; // Importando o modelo User
-import { statusCode } from '../utils/statusCode';
-import { userSchema } from '../validators/userValidation'; // Importando o schema de validação
 import { z } from 'zod';
-import bcrypt from  'bcrypt'; 
-import * as service from '../services/userService'
+import * as userService from '../services/userService';
+import { statusCode } from '../utils/statusCode';
 
-// Função para criar um novo usuário
 export const createUser = async (req: Request, res: Response) => {
     try {
-        const validatedData = userSchema.parse(req.body);
-
-        let { name, email, password } = validatedData; // Desestrutura os dados da variavel validada
-
-        password = await bcrypt.hash(password, 10); //Criptografa a senha 
-        
-        // Cria um novo documento usando o modelo
-        const newUser = new User({ name, email, password });
-
-        // Salva o documento no MongoDB
-        const savedUser = await service.createUserService(newUser)
-        /* const savedUser = await newUser.save(); */
-
-        res.status(statusCode.Created).json(savedUser); // Retorna o usuário criado
+        const newUser = await userService.createUser(req.body);
+        res.status(statusCode.Created).json(newUser);
     } catch (error) {
         if (error instanceof z.ZodError) {
             return res.status(statusCode.BadRequest).json({ errors: error.errors });
         }
         console.error('Erro ao criar usuário:', error);
-
-        // Tratamento de erros, como duplicidade de e-mail
         res.status(statusCode.BadRequest).json({ error });
     }
 };
 
-// Função para obter um usuário
 export const getAllUsers = async (req: Request, res: Response) => {
-
     try {
-        const users = await service.getAllUsers(); 
-
-        if (!users) {
+        const users = await userService.getAllUsers();
+        if (!users.length) {
             return res.status(statusCode.NotFound).json({ message: 'Nenhum usuário encontrado.' });
         }
-        res.status(statusCode.OK).json(users); // Retorna os dados como JSON
+        res.status(statusCode.OK).json(users);
     } catch (error) {
         res.status(statusCode.InternalServerError).json({ error: 'Erro ao buscar os usuários.' });
     }
-
 };
 
 export const getUserById = async (req: Request, res: Response) => {
-    const userId = req.params.id; // Pegando o ID da URL
-
     try {
-        // Buscar o usuário no MongoDB
-        const user = await service.getUserById(userId)
-        
+        const user = await userService.getUserById(req.params.id);
         if (!user) {
             return res.status(statusCode.NotFound).json({ message: 'Usuário não encontrado!' });
         }
-
-        res.status(statusCode.OK).json(user); // Retorna os dados do usuário
+        res.status(statusCode.OK).json(user);
     } catch (error) {
         console.error('Erro ao buscar o usuário:', error);
         res.status(statusCode.InternalServerError).json({ error: 'Erro interno do servidor.' });
     }
 };
 
-// Função para atualizar um usuário
 export const updateUser = async (req: Request, res: Response) => {
-    const userId = req.params.id; // Pegando o ID da URL
-
     try {
-
-        const validatedData = userSchema.parse(req.body);
-
-        let { name, email, password } = validatedData // Dados atualizados validados
-
-        if(validatedData.password){ 
-            validatedData.password = await bcrypt.hash(validatedData.password, 10);
-        }
-
-        // Atualizar o usuário no banco de dados
-        const updatedUser = await service.updateUserService(userId, validatedData)
-
-
+        const updatedUser = await userService.updateUser(req.params.id, req.body);
         if (!updatedUser) {
             return res.status(statusCode.NotFound).json({ message: 'Usuário não encontrado.' });
         }
-
         res.status(statusCode.OK).json({ message: 'Usuário atualizado com sucesso!', data: updatedUser });
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -101,24 +57,14 @@ export const updateUser = async (req: Request, res: Response) => {
     }
 };
 
-// Função para deletar um usuário.
 export const deleteUserById = async (req: Request, res: Response) => {
-    const userId = req.params.id;
-
     try {
-        const user = await service.getUserById(userId);
-
-        if (!user) {
+        const userDeleted = await userService.deleteUserById(req.params.id);
+        if (!userDeleted) {
             return res.status(statusCode.NotFound).json({ message: 'Usuário não encontrado.' });
         }
-
-        await service.deleteUserById(userId);
-        
-        return res.status(statusCode.OK).json({ message: 'Usuário deletado com sucesso!' });
+        res.status(statusCode.OK).json({ message: 'Usuário deletado com sucesso!' });
     } catch (error) {
-        if (error instanceof z.ZodError) {
-            return res.status(statusCode.BadRequest).json({ errors: error.errors });
-        }
         console.error('Erro ao deletar o usuário:', error);
         res.status(statusCode.InternalServerError).json({ error: 'Erro interno do servidor.' });
     }
