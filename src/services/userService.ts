@@ -1,45 +1,30 @@
-import User from '../models/userModel'; // Importando o modelo User
-import { userSchema } from '../validators/userValidation'; // Importando o schema de validação
 import bcrypt from 'bcrypt';
-import { z } from 'zod';
+import User from '../models/userModel';
+import { userSchema } from '../validators/userValidation';
 
-// Função para criar um novo usuário
-export const createUserService = async (userData: any) => {
-
-    const { name, email, password } = userData;
-
-    const newUser = new User({ name, email, password });
-
-    const user = await newUser.save();
-    
-    return user
-};
-
-// Função para obter todos os usuários
-export const getAllUsers = async () => {
-    const user = await User.find();
-    return user
-};
-
-// Função para obter um usuário por ID
-export const getUserById = async (userId: string) => {
-    const user = await User.findById(userId)
-    return user
-};
-
-// Função para atualizar um usuário
-export const updateUserService = async (userId: string, userData: any) => {
+export const createUser = async (userData: any) => {
     const validatedData = userSchema.parse(userData);
-    let { name, email, password } = validatedData;
-  
-    return await User.findByIdAndUpdate(
-        userId,
-        { name, email, password },
-        { new: true, runValidators: true }
-    );
+    validatedData.password = await bcrypt.hash(validatedData.password, 10);
+    const newUser = new User(validatedData);
+    return await newUser.save();
 };
 
-// Função para deletar um usuário
+export const getAllUsers = async () => {
+    return await User.find().select('-password');
+};
+
+export const getUserById = async (userId: string) => {
+    return await User.findById(userId).select('-password');
+};
+
+export const updateUser = async (userId: string, userData: any) => {
+    const validatedData = userSchema.parse(userData);
+    if (validatedData.password) {
+        validatedData.password = await bcrypt.hash(validatedData.password, 10);
+    }
+    return await User.findByIdAndUpdate(userId, validatedData, { new: true, runValidators: true }).select('-password');;
+};
+
 export const deleteUserById = async (userId: string) => {
     return await User.findByIdAndDelete(userId);
 };
