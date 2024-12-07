@@ -99,8 +99,89 @@ API REST desenvolvida em Node.js utilizando Express.js para gerenciamento de usu
    (rodar Typescript) ou ```npm run start``` (rodar JS).
 
  - **URL**: http://localhost:3000
+ 
 
 ---
+
+
+## 🧪 Testes (Jest)
+
+- Implementação e testes de integração do UserService. 
+
+- Simula um banco de dados MongoDB em memória com o pacote mongodb-memory-server.
+
+### Pré-requisitos (Testes)
+
+- Jest
+
+###### -  Certifique-se de ter o Node.js e o npm instalados.
+
+
+---
+
+## Principais Testes
+
+**Criar Usuário:**
+- Valida que o usuário é salvo corretamente no banco.
+- Confirma que a senha é armazenada em formato hash.
+
+**Validar Dados Inválidos:**
+- Testa se o serviço rejeita dados inválidos, como e-mails mal formatados.
+
+
+
+**Listar Usuários:**
+- Verifica se a lista de usuários contém os dados esperados.
+
+**Buscar por ID:**
+- Valida se o serviço encontra o usuário correto pelo ID.
+
+**Atualizar Usuário:**
+- Confirma se os dados são atualizados corretamente.
+- Garante que os campos antigos são substituídos pelos novos.
+
+**Deletar Usuário:**
+Testa se o usuário é removido corretamente do banco.
+
+---
+
+## Executar Testes
+
+   ```bash
+   npm run test
+   ```
+
+## Exemplo de Saída
+
+![Saída](src/docs/images/npm%20run%20test.jpg)
+
+
+
+## 🧪 Testes (Coverage)
+
+## Executar Testes
+
+   ```bash
+   npx jest --coverage
+   ```
+
+   O comando irá executar os testes e gerar um relatório de cobertura, exibindo os resultados no terminal.
+
+## Visualizar o Relatório
+
+1. Após rodar o comando, um diretório chamado ``` coverage/``` será criado na raiz do projeto.
+
+
+2. O relatório detalhado estará disponível no arquivo HTML dentro desse diretório:
+
+  ```bash
+    coverage/lcov-report/index.html
+   ```
+
+3. Abra o arquivo ```index.html``` no navegador para visualizar o relatório completo.
+
+## Exemplo de Saída
+![Coverage](src/docs/images/coverage.jpg)
 
 
 ## Contribuição
